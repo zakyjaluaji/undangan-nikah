@@ -1,0 +1,436 @@
+/**
+ * ===================================================
+ * LOGIKA INTERAKSI & ANIMASI STABLE ELEGAN
+ * Undangan Digital Zaky & Dina - Soft Blue & Pink
+ * ===================================================
+ */
+
+document.addEventListener("DOMContentLoaded", () => {
+  initWeddingData();
+  initAudioPlayer();
+  initCountdown();
+  initGuestbook();
+  initParticleCanvas();
+  initLightbox();
+  initScrollNav();
+});
+
+/* ===================================================
+   1. RENDER DATA DARI CONFIG.JS
+   =================================================== */
+function initWeddingData() {
+  if (typeof WEDDING_CONFIG === "undefined") return;
+
+  if (WEDDING_CONFIG.introVideoPath) {
+    const videoBg = document.getElementById("cover-video-bg");
+    if (videoBg) {
+      videoBg.src = WEDDING_CONFIG.introVideoPath;
+      videoBg.style.display = "block";
+      videoBg.play().catch(() => {});
+    }
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const guestName = urlParams.get("to") || urlParams.get("n") || "Tamu Undangan";
+  document.querySelectorAll(".recipient-name").forEach(el => {
+    el.textContent = decodeURIComponent(guestName.replace(/\+/g, " "));
+  });
+
+  document.querySelectorAll(".groom-nickname").forEach(el => el.textContent = WEDDING_CONFIG.groom.nickname);
+  document.querySelectorAll(".bride-nickname").forEach(el => el.textContent = WEDDING_CONFIG.bride.nickname);
+  
+  document.getElementById("groom-fullname").textContent = WEDDING_CONFIG.groom.fullName;
+  document.getElementById("groom-parents").textContent = WEDDING_CONFIG.groom.parents;
+  document.getElementById("groom-img").src = WEDDING_CONFIG.groom.photo;
+
+  document.getElementById("bride-fullname").textContent = WEDDING_CONFIG.bride.fullName;
+  document.getElementById("bride-parents").textContent = WEDDING_CONFIG.bride.parents;
+  document.getElementById("bride-img").src = WEDDING_CONFIG.bride.photo;
+
+  document.getElementById("cover-img").src = WEDDING_CONFIG.coupleCoverPhoto;
+  document.getElementById("hero-img").src = WEDDING_CONFIG.coupleFunPhoto;
+
+  document.getElementById("akad-date").textContent = WEDDING_CONFIG.akad.date;
+  document.getElementById("akad-time").textContent = WEDDING_CONFIG.akad.time;
+  document.getElementById("akad-venue").textContent = WEDDING_CONFIG.akad.venue;
+  document.getElementById("akad-address").textContent = WEDDING_CONFIG.akad.address;
+  document.getElementById("akad-maps").href = WEDDING_CONFIG.akad.mapsUrl;
+
+  document.getElementById("resepsi-date").textContent = WEDDING_CONFIG.resepsi.date;
+  document.getElementById("resepsi-time").textContent = WEDDING_CONFIG.resepsi.time;
+  document.getElementById("resepsi-venue").textContent = WEDDING_CONFIG.resepsi.venue;
+  document.getElementById("resepsi-address").textContent = WEDDING_CONFIG.resepsi.address;
+  document.getElementById("resepsi-maps").href = WEDDING_CONFIG.resepsi.mapsUrl;
+
+  const timelineContainer = document.getElementById("timeline-container");
+  if (timelineContainer && WEDDING_CONFIG.loveStory) {
+    timelineContainer.innerHTML = WEDDING_CONFIG.loveStory.map(item => `
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <span class="timeline-year">${item.year}</span>
+          <h4 class="timeline-title">${item.title}</h4>
+          <p class="timeline-desc">${item.description}</p>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  const bankGrid = document.getElementById("bank-grid");
+  if (bankGrid && WEDDING_CONFIG.banks) {
+    bankGrid.innerHTML = WEDDING_CONFIG.banks.map(bank => `
+      <div class="bank-card">
+        <div class="bank-name">${bank.bankName}</div>
+        <div class="account-number">${bank.accountNumber}</div>
+        <div class="account-holder">a.n. ${bank.accountHolder}</div>
+        <button class="btn-copy" onclick="copyToClipboard('${bank.accountNumber}', '${bank.bankName}')">
+          Salin No. Rekening
+        </button>
+      </div>
+    `).join("");
+  }
+
+  if (WEDDING_CONFIG.giftAddress) {
+    document.getElementById("gift-recipient").textContent = WEDDING_CONFIG.giftAddress.recipient;
+    document.getElementById("gift-phone").textContent = WEDDING_CONFIG.giftAddress.phone;
+    document.getElementById("gift-full-address").textContent = WEDDING_CONFIG.giftAddress.address;
+  }
+}
+
+/* ===================================================
+   2. AUDIO PLAYER & BUKA UNDANGAN
+   =================================================== */
+let audio = null;
+let isPlaying = false;
+
+function initAudioPlayer() {
+  audio = new Audio(WEDDING_CONFIG.audioPath || "assets/audio/wedding-song.m4a");
+  audio.loop = true;
+
+  const vinyl = document.getElementById("vinyl-disc");
+  if (vinyl) {
+    vinyl.addEventListener("click", toggleAudio);
+  }
+
+  const btnOpen = document.getElementById("btn-open-invitation");
+  if (btnOpen) {
+    btnOpen.addEventListener("click", () => {
+      const cover = document.getElementById("cover-overlay");
+      cover.classList.add("opened");
+      playAudio();
+
+      setTimeout(() => {
+        document.getElementById("hero")?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    });
+  }
+}
+
+function playAudio() {
+  if (!audio) return;
+  audio.play().then(() => {
+    isPlaying = true;
+    document.getElementById("vinyl-disc")?.classList.add("playing");
+  }).catch(err => console.log("Autoplay prevented:", err));
+}
+
+function toggleAudio() {
+  if (!audio) return;
+  if (isPlaying) {
+    audio.pause();
+    isPlaying = false;
+    document.getElementById("vinyl-disc")?.classList.remove("playing");
+  } else {
+    playAudio();
+  }
+}
+
+/* ===================================================
+   3. COUNTDOWN TIMER
+   =================================================== */
+function initCountdown() {
+  const targetDate = new Date(WEDDING_CONFIG.weddingDate).getTime();
+
+  function updateTimer() {
+    const now = new Date().getTime();
+    const difference = targetDate - now;
+
+    if (difference <= 0) {
+      document.getElementById("days").textContent = "00";
+      document.getElementById("hours").textContent = "00";
+      document.getElementById("minutes").textContent = "00";
+      document.getElementById("seconds").textContent = "00";
+      return;
+    }
+
+    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+    document.getElementById("days").textContent = String(days).padStart(2, "0");
+    document.getElementById("hours").textContent = String(hours).padStart(2, "0");
+    document.getElementById("minutes").textContent = String(minutes).padStart(2, "0");
+    document.getElementById("seconds").textContent = String(seconds).padStart(2, "0");
+  }
+
+  updateTimer();
+  setInterval(updateTimer, 1000);
+}
+
+/* ===================================================
+   4. BUKU TAMU / UCAPAN (LOCALSTORAGE)
+   =================================================== */
+const DEFAULT_WISHES = [
+  {
+    name: "Budi & Keluarga",
+    status: "hadir",
+    message: "Selamat untuk Zaky & Dina! Semoga pernikahan ini selalu dipenuhi kebahagiaan dan cinta.",
+    date: "10 menit yang lalu"
+  },
+  {
+    name: "Anisa Rahma",
+    status: "hadir",
+    message: "Happy wedding ya Zaky & Dina! Bahagia selalu sampai akhir hayat.",
+    date: "1 jam yang lalu"
+  },
+  {
+    name: "Rian & Partner",
+    status: "tidak-hadir",
+    message: "Selamat Zaky & Dina! Mohon maaf belum bisa hadir langsung, doa terbaik dari kami!",
+    date: "3 jam yang lalu"
+  }
+];
+
+function initGuestbook() {
+  const form = document.getElementById("rsvp-form");
+  if (!form) return;
+
+  renderWishes();
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const nameInput = document.getElementById("guest-name").value.trim();
+    const statusSelect = document.getElementById("guest-status").value;
+    const messageInput = document.getElementById("guest-message").value.trim();
+
+    if (!nameInput || !messageInput) {
+      showToast("Mohon lengkapi nama dan ucapan Anda.");
+      return;
+    }
+
+    const newWish = {
+      name: nameInput,
+      status: statusSelect,
+      message: messageInput,
+      date: "Baru saja"
+    };
+
+    let storedWishes = JSON.parse(localStorage.getItem("wedding_wishes") || "null");
+    if (!storedWishes) storedWishes = [...DEFAULT_WISHES];
+
+    storedWishes.unshift(newWish);
+    localStorage.setItem("wedding_wishes", JSON.stringify(storedWishes));
+
+    form.reset();
+    renderWishes();
+    showToast("Terima kasih, ucapan Anda telah terkirim.");
+  });
+}
+
+function renderWishes() {
+  const container = document.getElementById("wishes-container");
+  if (!container) return;
+
+  let storedWishes = JSON.parse(localStorage.getItem("wedding_wishes") || "null");
+  if (!storedWishes) storedWishes = DEFAULT_WISHES;
+
+  container.innerHTML = storedWishes.map(wish => `
+    <div class="wish-item">
+      <div class="wish-header">
+        <span class="wish-author">${escapeHtml(wish.name)}</span>
+        <span class="wish-status ${wish.status === 'hadir' ? 'hadir' : 'tidak-hadir'}">
+          ${wish.status === 'hadir' ? 'Hadir' : 'Halangan'}
+        </span>
+      </div>
+      <p class="wish-text">${escapeHtml(wish.message)}</p>
+    </div>
+  `).join("");
+}
+
+function escapeHtml(str) {
+  return str.replace(/[&<>"']/g, (m) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+  })[m]);
+}
+
+/* ===================================================
+   5. COPY TO CLIPBOARD & TOAST
+   =================================================== */
+function copyToClipboard(text, name) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(`Nomor Rekening ${name} telah disalin.`);
+  }).catch(() => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textArea);
+    showToast(`Nomor Rekening ${name} telah disalin.`);
+  });
+}
+
+function showToast(message) {
+  const toast = document.getElementById("toast-notification");
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add("show");
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 3000);
+}
+
+/* ===================================================
+   6. LIGHTBOX GALERI
+   =================================================== */
+function initLightbox() {
+  const modal = document.getElementById("lightbox-modal");
+  const modalImg = document.getElementById("lightbox-img");
+  const closeBtn = document.getElementById("lightbox-close");
+
+  if (!modal || !modalImg) return;
+
+  document.querySelectorAll(".gallery-item").forEach(item => {
+    item.addEventListener("click", () => {
+      const imgSrc = item.querySelector("img")?.src;
+      if (imgSrc) {
+        modalImg.src = imgSrc;
+        modal.classList.add("active");
+      }
+    });
+  });
+
+  closeBtn?.addEventListener("click", () => modal.classList.remove("active"));
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) modal.classList.remove("active");
+  });
+}
+
+/* ===================================================
+   7. SCROLL NAVIGASI PERBAIKAN STATE ACTIVE & SCROLL
+   =================================================== */
+function initScrollNav() {
+  const sections = document.querySelectorAll("section[id]");
+  const navItems = document.querySelectorAll(".nav-item");
+
+  if (!sections.length || !navItems.length) return;
+
+  // Klik langsung memindahkan active state
+  navItems.forEach(item => {
+    item.addEventListener("click", function(e) {
+      navItems.forEach(nav => nav.classList.remove("active"));
+      this.classList.add("active");
+    });
+  });
+
+  function updateActiveOnScroll() {
+    const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+    let currentId = "";
+
+    sections.forEach(section => {
+      const top = section.offsetTop - 140;
+      const height = section.offsetHeight;
+      if (scrollPos >= top && scrollPos < top + height) {
+        currentId = section.getAttribute("id");
+      }
+    });
+
+    if (scrollPos < 150) {
+      currentId = "hero";
+    }
+
+    if (currentId) {
+      navItems.forEach(item => {
+        item.classList.remove("active");
+        if (item.getAttribute("href") === `#${currentId}`) {
+          item.classList.add("active");
+        }
+      });
+    }
+  }
+
+  window.addEventListener("scroll", updateActiveOnScroll, { passive: true });
+}
+
+/* ===================================================
+   9. MODAL BARCODE / QR CODE SATUALBUM
+   =================================================== */
+function openQrModal() {
+  const modal = document.getElementById("qr-modal");
+  if (modal) modal.classList.add("active");
+}
+
+function closeQrModal() {
+  const modal = document.getElementById("qr-modal");
+  if (modal) modal.classList.remove("active");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const qrModal = document.getElementById("qr-modal");
+  qrModal?.addEventListener("click", (e) => {
+    if (e.target === qrModal) closeQrModal();
+  });
+});
+function initParticleCanvas() {
+  const canvas = document.getElementById("particle-canvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+
+  let width = canvas.width = window.innerWidth;
+  let height = canvas.height = window.innerHeight;
+
+  window.addEventListener("resize", () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  });
+
+  const particles = [];
+  for (let i = 0; i < 20; i++) {
+    particles.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      radius: Math.random() * 4 + 2,
+      alpha: Math.random() * 0.25 + 0.1,
+      speedY: Math.random() * 0.35 + 0.15,
+      wobbleSpeed: Math.random() * 0.02 + 0.01,
+      wobbleAngle: Math.random() * Math.PI * 2
+    });
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, width, height);
+
+    particles.forEach(p => {
+      p.y -= p.speedY;
+      p.wobbleAngle += p.wobbleSpeed;
+      p.x += Math.sin(p.wobbleAngle) * 0.25;
+
+      if (p.y < -15) {
+        p.y = height + 15;
+        p.x = Math.random() * width;
+      }
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(216, 150, 168, ${p.alpha})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+}
