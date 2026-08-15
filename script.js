@@ -207,6 +207,7 @@ function initGuestbook() {
   if (!form) return;
 
   renderWishes();
+  fetchWishesFromGoogleSheets();
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -233,10 +234,49 @@ function initGuestbook() {
     storedWishes.unshift(newWish);
     localStorage.setItem("wedding_wishes", JSON.stringify(storedWishes));
 
+    // OTOMATIS ASYNCHRONOUS SEND TO GOOGLE SHEETS
+    const webhookUrl = (typeof WEDDING_CONFIG !== "undefined" && WEDDING_CONFIG.googleDriveWebhookUrl)
+      ? WEDDING_CONFIG.googleDriveWebhookUrl
+      : "https://script.google.com/macros/s/AKfycbzd0zThvRVFm5GE6YynxrgP6l2nYINnmOjumqMSTuFz04vE5YwOBSfgnOnM9nMlop0Y/exec";
+
+    if (webhookUrl) {
+      fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          type: "rsvp",
+          name: nameInput,
+          status: statusSelect,
+          message: messageInput
+        })
+      }).then(() => {
+        console.log("RSVP berhasil dikirim ke Google Sheets!");
+        setTimeout(fetchWishesFromGoogleSheets, 1500);
+      }).catch(err => console.warn("RSVP log:", err));
+    }
+
     form.reset();
     renderWishes();
-    showToast("Terima kasih, ucapan Anda telah terkirim.");
+    showToast("Terima kasih, ucapan Anda telah terkirim!");
   });
+}
+
+function fetchWishesFromGoogleSheets() {
+  const webhookUrl = (typeof WEDDING_CONFIG !== "undefined" && WEDDING_CONFIG.googleDriveWebhookUrl)
+    ? WEDDING_CONFIG.googleDriveWebhookUrl
+    : "https://script.google.com/macros/s/AKfycbzd0zThvRVFm5GE6YynxrgP6l2nYINnmOjumqMSTuFz04vE5YwOBSfgnOnM9nMlop0Y/exec";
+
+  if (!webhookUrl) return;
+
+  fetch(webhookUrl)
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.status === "success" && Array.isArray(data.wishes) && data.wishes.length > 0) {
+        localStorage.setItem("wedding_wishes", JSON.stringify(data.wishes));
+        renderWishes();
+      }
+    })
+    .catch(err => console.warn("Google Sheets fetch wishes log:", err));
 }
 
 function renderWishes() {
@@ -250,8 +290,8 @@ function renderWishes() {
     <div class="wish-item">
       <div class="wish-header">
         <span class="wish-author">${escapeHtml(wish.name)}</span>
-        <span class="wish-status ${wish.status === 'hadir' ? 'hadir' : 'tidak-hadir'}">
-          ${wish.status === 'hadir' ? 'Hadir' : 'Halangan'}
+        <span class="wish-status ${wish.status === 'hadir' || wish.status === 'Dateng' ? 'hadir' : 'tidak-hadir'}">
+          ${wish.status === 'hadir' || wish.status === 'Dateng' ? 'Hadir' : 'Halangan'}
         </span>
       </div>
       <p class="wish-text">${escapeHtml(wish.message)}</p>
