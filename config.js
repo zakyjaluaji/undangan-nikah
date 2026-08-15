@@ -32,8 +32,8 @@ const WEDDING_CONFIG = {
   // Tanggal Acara Utama untuk Hitung Mundur (Akad Nikah: 24 April 2027 07:00:00)
   weddingDate: "2027-04-24T07:00:00",
 
-  // Google Drive Integration (Aktif 100%: Mengirim foto otomatis ke folder Google Drive "Foto Nikah Zaky & Dina")
-  googleDriveWebhookUrl: "https://script.google.com/macros/s/AKfycbzd0zThvRVFm5GE6YynxrgP6l2nYINnmOjumqMSTuFz04vE5YwOBSfgnOnM9nMlop0Y/exec",
+  // Google Drive & Google Sheets Integration (Aktif: Mengirim foto & data RSVP ke Google Sheets & Drive Zaky Dina)
+  googleDriveWebhookUrl: "https://script.google.com/macros/s/AKfycbwRI-dey_jSPp92z2EOmsKTbm286ObmS0-2_cUayeXgMrWC5cEfXVm65DSiICg2CMni/exec",
 
   // Detail Acara Akad Nikah
   akad: {
