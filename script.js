@@ -121,8 +121,9 @@ function initAudioPlayer() {
       playAudio();
 
       setTimeout(() => {
+        cover.style.display = "none";
         document.getElementById("hero")?.scrollIntoView({ behavior: "smooth" });
-      }, 300);
+      }, 500);
     });
   }
 }
@@ -363,11 +364,15 @@ function initLightbox() {
    7. SCROLL NAVIGASI PERBAIKAN STATE ACTIVE & SCROLL
    =================================================== */
 function initScrollNav() {
-  const sections = document.querySelectorAll("section[id]");
   const navItems = document.querySelectorAll(".floating-navbar .nav-item");
   const navContainer = document.getElementById("floating-navbar");
+  if (!navItems.length) return;
 
-  if (!sections.length || !navItems.length) return;
+  // Filter HANYA section yang memiliki link di navbar!
+  const targetIds = Array.from(navItems).map(item => item.getAttribute("href")).filter(h => h && h.startsWith("#"));
+  const sections = Array.from(document.querySelectorAll("section[id]")).filter(sec => targetIds.includes("#" + sec.id));
+
+  if (!sections.length) return;
 
   function updateActiveOnScroll() {
     const viewportHeight = window.innerHeight;
