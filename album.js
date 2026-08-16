@@ -79,6 +79,7 @@ function initGuestAlbumApp() {
   getDeviceId();
   initGuestNameAndLock();
   renderGuestAlbums();
+  fetchPhotosFromCloud();
   updateDeviceQuotaBadge();
   initCameraControls();
   initFilterPills();
@@ -205,6 +206,52 @@ function renderGuestAlbums() {
   `).join("");
 
   updateDeviceQuotaBadge();
+}
+
+function fetchPhotosFromCloud() {
+  const webhookUrl = (typeof WEDDING_CONFIG !== "undefined" && WEDDING_CONFIG.googleDriveWebhookUrl)
+    ? WEDDING_CONFIG.googleDriveWebhookUrl
+    : "https://script.google.com/macros/s/AKfycbwXHFr2JN8Vm9s1fccMMWZxU1mWFb46rsxHdofvVuF-Hqzf2iJ4HIEHpwifcopUQmf5/exec";
+
+  if (!webhookUrl) return;
+
+  fetch(webhookUrl + "?action=getPhotos")
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.status === "success" && Array.isArray(data.photos) && data.photos.length > 0) {
+        mergeCloudPhotosToLocal(data.photos);
+      }
+    })
+    .catch(err => console.warn("Log fetch photos cloud:", err));
+}
+
+function mergeCloudPhotosToLocal(cloudPhotos) {
+  let localAlbums = getStoredAlbums();
+
+  cloudPhotos.forEach(cPhoto => {
+    const guestName = cPhoto.guestName || "Tamu Undangan";
+    let group = localAlbums.find(g => g.guestName.toLowerCase() === guestName.toLowerCase());
+
+    if (!group) {
+      group = { guestName: guestName, photos: [] };
+      localAlbums.push(group);
+    }
+
+    const exists = group.photos.some(p => p.url === cPhoto.url || (p.caption && p.caption === cPhoto.caption && p.caption !== ""));
+    if (!exists) {
+      group.photos.unshift({
+        id: "cloud_" + Math.random().toString(36).substr(2, 9),
+        url: cPhoto.url,
+        caption: cPhoto.caption || "",
+        deviceId: "cloud",
+        filter: "none",
+        time: cPhoto.time || "Baru saja"
+      });
+    }
+  });
+
+  saveStoredAlbums(localAlbums);
+  renderGuestAlbums();
 }
 
 /* ===================================================
