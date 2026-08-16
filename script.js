@@ -12,7 +12,6 @@ document.addEventListener("DOMContentLoaded", () => {
   initGuestbook();
   initParticleCanvas();
   initLightbox();
-  initScrollNav();
   initScrollReveal();
 });
 
@@ -360,73 +359,7 @@ function initLightbox() {
   });
 }
 
-/* ===================================================
-   7. SCROLL NAVIGASI PERBAIKAN STATE ACTIVE & SCROLL
-   =================================================== */
-function initScrollNav() {
-  const navItems = document.querySelectorAll(".floating-navbar .nav-item");
-  const navContainer = document.getElementById("floating-navbar");
-  if (!navItems.length) return;
 
-  // Filter HANYA section yang memiliki link di navbar!
-  const targetIds = Array.from(navItems).map(item => item.getAttribute("href")).filter(h => h && h.startsWith("#"));
-  const sections = Array.from(document.querySelectorAll("section[id]")).filter(sec => targetIds.includes("#" + sec.id));
-
-  if (!sections.length) return;
-
-  function updateActiveOnScroll() {
-    const viewportHeight = window.innerHeight;
-    let currentId = "hero";
-    let maxVisibleHeight = -1;
-
-    sections.forEach(section => {
-      const rect = section.getBoundingClientRect();
-      const visibleTop = Math.max(0, rect.top);
-      const visibleBottom = Math.min(viewportHeight, rect.bottom);
-      const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-
-      if (visibleHeight > maxVisibleHeight) {
-        maxVisibleHeight = visibleHeight;
-        currentId = section.getAttribute("id");
-      }
-    });
-
-    let activeNav = null;
-    navItems.forEach(item => {
-      const href = item.getAttribute("href");
-      if (href === `#${currentId}`) {
-        item.classList.add("active");
-        activeNav = item;
-      } else {
-        item.classList.remove("active");
-      }
-    });
-
-    // Otomatis menggeser posisi scroll horizontal navbar ke tengah
-    if (activeNav && navContainer) {
-      const navRect = navContainer.getBoundingClientRect();
-      const itemRect = activeNav.getBoundingClientRect();
-      const scrollOffset = (itemRect.left + itemRect.width / 2) - (navRect.left + navRect.width / 2);
-      if (Math.abs(scrollOffset) > 2) {
-        navContainer.scrollBy({ left: scrollOffset, behavior: "smooth" });
-      }
-    }
-  }
-
-  navItems.forEach(item => {
-    item.addEventListener("click", function(e) {
-      e.preventDefault();
-      const href = this.getAttribute("href");
-      const targetEl = document.querySelector(href);
-      if (targetEl) {
-        targetEl.scrollIntoView({ behavior: "smooth" });
-      }
-    });
-  });
-
-  window.addEventListener("scroll", updateActiveOnScroll, { passive: true });
-  updateActiveOnScroll();
-}
 
 /* ===================================================
    9. MODAL BARCODE / QR CODE SATUALBUM
