@@ -368,41 +368,36 @@ function initScrollNav() {
 
   if (!sections.length || !navItems.length) return;
 
-  // Klik langsung memindahkan active state
+  function updateActiveOnScroll() {
+    const viewportThreshold = window.innerHeight * 0.35;
+    let currentId = "hero";
+
+    sections.forEach(section => {
+      const rect = section.getBoundingClientRect();
+      if (rect.top <= viewportThreshold && rect.bottom >= 80) {
+        currentId = section.getAttribute("id");
+      }
+    });
+
+    navItems.forEach(item => {
+      const href = item.getAttribute("href");
+      if (href === `#${currentId}`) {
+        item.classList.add("active");
+      } else {
+        item.classList.remove("active");
+      }
+    });
+  }
+
   navItems.forEach(item => {
-    item.addEventListener("click", function(e) {
+    item.addEventListener("click", function() {
       navItems.forEach(nav => nav.classList.remove("active"));
       this.classList.add("active");
     });
   });
 
-  function updateActiveOnScroll() {
-    const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
-    let currentId = "";
-
-    sections.forEach(section => {
-      const top = section.offsetTop - 140;
-      const height = section.offsetHeight;
-      if (scrollPos >= top && scrollPos < top + height) {
-        currentId = section.getAttribute("id");
-      }
-    });
-
-    if (scrollPos < 150) {
-      currentId = "hero";
-    }
-
-    if (currentId) {
-      navItems.forEach(item => {
-        item.classList.remove("active");
-        if (item.getAttribute("href") === `#${currentId}`) {
-          item.classList.add("active");
-        }
-      });
-    }
-  }
-
   window.addEventListener("scroll", updateActiveOnScroll, { passive: true });
+  updateActiveOnScroll();
 }
 
 /* ===================================================
