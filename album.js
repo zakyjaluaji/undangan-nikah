@@ -714,10 +714,11 @@ function uploadToGoogleDrive(photo, guestName, webhookUrl) {
 
   fetch(webhookUrl, {
     method: "POST",
+    mode: "no-cors",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify(payload)
   }).then(() => {
-    console.log("Foto berhasil dikirim ke Google Drive!");
+    console.log("Foto berhasil dikirim ke Google Drive & Cloud Shared Album!");
   }).catch(err => {
     console.warn("Log pengiriman Google Drive:", err);
   });
