@@ -380,13 +380,14 @@ function initCameraControls() {
     startCameraStream();
   });
 
-  btnFlipCam?.addEventListener("click", (e) => {
+  btnFlipCam?.addEventListener("click", async (e) => {
     e.stopPropagation();
     currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
     if (mediaStream) {
       mediaStream.getTracks().forEach(track => track.stop());
+      mediaStream = null;
     }
-    startCameraStream();
+    await startCameraStream();
   });
 
   btnSnap?.addEventListener("click", (e) => {
@@ -428,7 +429,7 @@ async function startCameraStream() {
   const placeholder = document.getElementById("camera-placeholder");
 
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    alert("Browser/Perangkat Anda belum mengizinkan akses siaran kamera langsung. Mengalihkan ke galeri HP...");
+    alert("Browser/Perangkat Anda belum mengizinkan akses kamera langsung. Mengalihkan ke Galeri HP...");
     document.getElementById("file-input")?.click();
     return;
   }
@@ -440,25 +441,44 @@ async function startCameraStream() {
 
   let stream = null;
 
+  // 1. Coba exact constraint untuk switch kamera depan/belakang di HP
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: currentFacingMode },
+      video: { facingMode: { exact: currentFacingMode } },
       audio: false
     });
   } catch (e1) {
+    // 2. Coba ideal constraint (fallback HP/Tablet)
     try {
       stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
+        video: { facingMode: { ideal: currentFacingMode } },
         audio: false
       });
     } catch (e2) {
-      console.warn("Generic camera stream failed:", e2);
+      // 3. Coba facing mode sederhana
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: currentFacingMode },
+          audio: false
+        });
+      } catch (e3) {
+        // 4. Fallback umum jika hanya ada 1 kamera / webcam
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false
+          });
+        } catch (e4) {
+          console.warn("Camera stream failed all constraints:", e4);
+        }
+      }
     }
   }
 
   if (stream) {
     mediaStream = stream;
     if (videoStream) {
+      videoStream.muted = true; // Wajib untuk izin autoplay video di HP iOS/Android!
       videoStream.srcObject = stream;
       videoStream.style.display = "block";
 
@@ -468,7 +488,11 @@ async function startCameraStream() {
         videoStream.style.transform = "none";
       }
 
-      videoStream.play().catch(err => console.error("Video play error:", err));
+      try {
+        await videoStream.play();
+      } catch (err) {
+        console.error("Video play error:", err);
+      }
     }
     if (placeholder) {
       placeholder.style.display = "none";
