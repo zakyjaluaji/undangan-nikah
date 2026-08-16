@@ -370,24 +370,21 @@ function initScrollNav() {
   if (!sections.length || !navItems.length) return;
 
   function updateActiveOnScroll() {
-    const scrollPos = window.scrollY || document.documentElement.scrollTop || 0;
-    const windowHeight = window.innerHeight;
-    const documentHeight = document.documentElement.scrollHeight;
-
+    const viewportHeight = window.innerHeight;
     let currentId = "hero";
-    const targetPoint = scrollPos + (windowHeight * 0.4);
+    let maxVisibleHeight = -1;
 
     sections.forEach(section => {
-      const top = section.offsetTop;
-      const height = section.offsetHeight;
-      if (targetPoint >= top && targetPoint < top + height) {
+      const rect = section.getBoundingClientRect();
+      const visibleTop = Math.max(0, rect.top);
+      const visibleBottom = Math.min(viewportHeight, rect.bottom);
+      const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+
+      if (visibleHeight > maxVisibleHeight) {
+        maxVisibleHeight = visibleHeight;
         currentId = section.getAttribute("id");
       }
     });
-
-    if ((window.innerHeight + scrollPos) >= documentHeight - 60) {
-      currentId = "gift";
-    }
 
     let activeNav = null;
     navItems.forEach(item => {
@@ -405,7 +402,7 @@ function initScrollNav() {
       const navRect = navContainer.getBoundingClientRect();
       const itemRect = activeNav.getBoundingClientRect();
       const scrollOffset = (itemRect.left + itemRect.width / 2) - (navRect.left + navRect.width / 2);
-      if (Math.abs(scrollOffset) > 5) {
+      if (Math.abs(scrollOffset) > 2) {
         navContainer.scrollBy({ left: scrollOffset, behavior: "smooth" });
       }
     }
