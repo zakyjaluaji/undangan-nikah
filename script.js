@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initParticleCanvas();
   initLightbox();
   initScrollNav();
+  initScrollReveal();
 });
 
 /* ===================================================
@@ -64,8 +65,8 @@ function initWeddingData() {
 
   const timelineContainer = document.getElementById("timeline-container");
   if (timelineContainer && WEDDING_CONFIG.loveStory) {
-    timelineContainer.innerHTML = WEDDING_CONFIG.loveStory.map(item => `
-      <div class="timeline-item">
+    timelineContainer.innerHTML = WEDDING_CONFIG.loveStory.map((item, idx) => `
+      <div class="timeline-item reveal-on-scroll delay-${(idx + 1) * 100}">
         <div class="timeline-dot"></div>
         <div class="timeline-content">
           <span class="timeline-year">${item.year}</span>
@@ -78,8 +79,8 @@ function initWeddingData() {
 
   const bankGrid = document.getElementById("bank-grid");
   if (bankGrid && WEDDING_CONFIG.banks) {
-    bankGrid.innerHTML = WEDDING_CONFIG.banks.map(bank => `
-      <div class="bank-card">
+    bankGrid.innerHTML = WEDDING_CONFIG.banks.map((bank, idx) => `
+      <div class="bank-card reveal-on-scroll delay-${(idx + 1) * 100}">
         <div class="bank-name">${bank.bankName}</div>
         <div class="account-number">${bank.accountNumber}</div>
         <div class="account-holder">a.n. ${bank.accountHolder}</div>
@@ -473,4 +474,28 @@ function initParticleCanvas() {
   }
 
   animate();
+}
+
+/* ===================================================
+   10. ELEGANT SCROLL REVEAL OBSERVER
+   =================================================== */
+function initScrollReveal() {
+  const revealElements = document.querySelectorAll(".reveal-on-scroll, .reveal-zoom, .reveal-slide-left, .reveal-slide-right");
+  if (!revealElements.length) return;
+
+  const observerOptions = {
+    root: null,
+    rootMargin: "0px 0px -50px 0px",
+    threshold: 0.1
+  };
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("revealed");
+      }
+    });
+  }, observerOptions);
+
+  revealElements.forEach(el => revealObserver.observe(el));
 }
