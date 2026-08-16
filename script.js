@@ -364,29 +364,51 @@ function initLightbox() {
    =================================================== */
 function initScrollNav() {
   const sections = document.querySelectorAll("section[id]");
-  const navItems = document.querySelectorAll(".nav-item");
+  const navItems = document.querySelectorAll(".floating-navbar .nav-item");
+  const navContainer = document.getElementById("floating-navbar");
 
   if (!sections.length || !navItems.length) return;
 
   function updateActiveOnScroll() {
-    const viewportThreshold = window.innerHeight * 0.35;
+    const scrollPos = window.scrollY || document.documentElement.scrollTop || 0;
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+
     let currentId = "hero";
+    const targetPoint = scrollPos + (windowHeight * 0.4);
 
     sections.forEach(section => {
-      const rect = section.getBoundingClientRect();
-      if (rect.top <= viewportThreshold && rect.bottom >= 80) {
+      const top = section.offsetTop;
+      const height = section.offsetHeight;
+      if (targetPoint >= top && targetPoint < top + height) {
         currentId = section.getAttribute("id");
       }
     });
 
+    if ((window.innerHeight + scrollPos) >= documentHeight - 60) {
+      currentId = "gift";
+    }
+
+    let activeNav = null;
     navItems.forEach(item => {
       const href = item.getAttribute("href");
       if (href === `#${currentId}`) {
         item.classList.add("active");
+        activeNav = item;
       } else {
         item.classList.remove("active");
       }
     });
+
+    // Otomatis menggeser posisi scroll horizontal navbar ke tengah
+    if (activeNav && navContainer) {
+      const navRect = navContainer.getBoundingClientRect();
+      const itemRect = activeNav.getBoundingClientRect();
+      const scrollOffset = (itemRect.left + itemRect.width / 2) - (navRect.left + navRect.width / 2);
+      if (Math.abs(scrollOffset) > 5) {
+        navContainer.scrollBy({ left: scrollOffset, behavior: "smooth" });
+      }
+    }
   }
 
   navItems.forEach(item => {
@@ -395,8 +417,6 @@ function initScrollNav() {
       const href = this.getAttribute("href");
       const targetEl = document.querySelector(href);
       if (targetEl) {
-        navItems.forEach(nav => nav.classList.remove("active"));
-        this.classList.add("active");
         targetEl.scrollIntoView({ behavior: "smooth" });
       }
     });
