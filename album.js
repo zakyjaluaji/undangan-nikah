@@ -89,7 +89,7 @@ function initGuestAlbumApp() {
 
 function initGuestNameAndLock() {
   const urlParams = new URLSearchParams(window.location.search);
-  const guestNameParam = urlParams.get("to");
+  const guestNameParam = urlParams.get("to") || urlParams.get("n") || urlParams.get("nama") || urlParams.get("tamu") || urlParams.get("guest");
   const nameInput = document.getElementById("global-guest-name");
   const lockInfo = document.getElementById("identity-lock-info");
 
@@ -107,10 +107,21 @@ function initGuestNameAndLock() {
         lockInfo.style.color = "var(--blue-primary)";
       }
     } else if (guestNameParam) {
-      nameInput.value = guestNameParam.replace(/\+/g, " ");
+      let parsedName = "";
+      try {
+        parsedName = decodeURIComponent(guestNameParam.replace(/\+/g, " "));
+      } catch (e) {
+        parsedName = guestNameParam.replace(/\+/g, " ");
+      }
+      nameInput.value = parsedName;
+      try {
+        localStorage.setItem("zaky_dina_current_guest_name", parsedName);
+      } catch (e) {}
     } else {
       const savedName = localStorage.getItem("zaky_dina_current_guest_name");
-      if (savedName) nameInput.value = savedName;
+      if (savedName && savedName !== "Tamu Undangan") {
+        nameInput.value = savedName;
+      }
     }
 
     nameInput.addEventListener("input", () => {

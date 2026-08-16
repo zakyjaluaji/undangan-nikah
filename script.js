@@ -31,10 +31,27 @@ function initWeddingData() {
   }
 
   const urlParams = new URLSearchParams(window.location.search);
-  const guestName = urlParams.get("to") || urlParams.get("n") || "Tamu Undangan";
+  const rawName = urlParams.get("to") || urlParams.get("n") || urlParams.get("nama") || urlParams.get("tamu") || urlParams.get("guest") || "Tamu Undangan";
+  let decodedName = "Tamu Undangan";
+  try {
+    decodedName = decodeURIComponent(rawName.replace(/\+/g, " "));
+  } catch (e) {
+    decodedName = rawName.replace(/\+/g, " ");
+  }
+
   document.querySelectorAll(".recipient-name").forEach(el => {
-    el.textContent = decodeURIComponent(guestName.replace(/\+/g, " "));
+    el.textContent = decodedName;
   });
+
+  if (decodedName && decodedName !== "Tamu Undangan") {
+    try {
+      localStorage.setItem("zaky_dina_current_guest_name", decodedName);
+    } catch (e) {}
+
+    document.querySelectorAll("a[href^='album.html']").forEach(a => {
+      a.href = "album.html?to=" + encodeURIComponent(decodedName);
+    });
+  }
 
   document.querySelectorAll(".groom-nickname").forEach(el => el.textContent = WEDDING_CONFIG.groom.nickname);
   document.querySelectorAll(".bride-nickname").forEach(el => el.textContent = WEDDING_CONFIG.bride.nickname);
