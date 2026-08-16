@@ -93,7 +93,11 @@ function initGuestNameAndLock() {
   const nameInput = document.getElementById("global-guest-name");
   const lockInfo = document.getElementById("identity-lock-info");
 
-  const lockedName = localStorage.getItem("zaky_dina_locked_guest_name");
+  let lockedName = localStorage.getItem("zaky_dina_locked_guest_name");
+  if (lockedName === "Tamu Undangan") {
+    localStorage.removeItem("zaky_dina_locked_guest_name");
+    lockedName = null;
+  }
 
   if (nameInput) {
     if (lockedName) {
