@@ -390,9 +390,15 @@ function initScrollNav() {
   }
 
   navItems.forEach(item => {
-    item.addEventListener("click", function() {
-      navItems.forEach(nav => nav.classList.remove("active"));
-      this.classList.add("active");
+    item.addEventListener("click", function(e) {
+      e.preventDefault();
+      const href = this.getAttribute("href");
+      const targetEl = document.querySelector(href);
+      if (targetEl) {
+        navItems.forEach(nav => nav.classList.remove("active"));
+        this.classList.add("active");
+        targetEl.scrollIntoView({ behavior: "smooth" });
+      }
     });
   });
 
