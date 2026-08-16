@@ -441,7 +441,7 @@ function initScrollReveal() {
 
   const observerOptions = {
     root: null,
-    rootMargin: "0px 0px -50px 0px",
+    rootMargin: "0px 0px -30px 0px",
     threshold: 0.1
   };
 
@@ -449,6 +449,8 @@ function initScrollReveal() {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.classList.add("revealed");
+      } else {
+        entry.target.classList.remove("revealed");
       }
     });
   }, observerOptions);
